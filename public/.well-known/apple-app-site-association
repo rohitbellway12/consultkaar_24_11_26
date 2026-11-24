@@ -1,0 +1,21 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "8B5T46K45X.com.consultkaar.userapp",
+        "paths": [
+          "/reel/*",
+          "*"
+        ]
+      },
+      {
+        "appID": "8B5T46K45X.com.consultkaar.advisor",
+        "paths": [
+          "/reel/*",
+          "*"
+        ]
+      }
+    ]
+  }
+}

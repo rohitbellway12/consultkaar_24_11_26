@@ -1,0 +1,194 @@
+================================================================================
+ADVISOR REELS — FLUTTER INTEGRATION GUIDE (Hinglish)
+================================================================================
+Yeh doc btata hai ki "Advisor Reels" feature kaise implement karein Flutter app
+mein, kaunse APIs call karein, kya body bhejna hai, aur kya response milega.
+
+Sabhi APIs JWT-auth hain (Bearer token). Ekx "advisor" ek doctor/content-creator
+user (role_id = 3) hota hai.
+
+--------------------------------------------------------------------------------
+1. AUTHENTICATION (Advisor / User login)
+--------------------------------------------------------------------------------
+App OTP-based login use karti hai. Pehle OTP hasil karo, phir verify karke Bearer
+token le aao. Token = response.data.auth_token.
+
+# Step 1 — OTP hasil karo (mobile ya email, role_id = 3 advisor ke liye)
+curl -X POST "$BASE/api/auth/login" \
+  -H "Content-Type: application/json" \
+  -d '{"role_id":3,"mobile_number":"+917894561235"}'
+
+   ya email se:
+curl -X POST "$BASE/api/auth/login" \
+  -H "Content-Type: application/json" \
+  -d '{"role_id":3,"email":"testuser@gmail.com"}'
+
+   NOTE: Fixed test OTPs (agar OTP send fail bhi kare toh DB mein set ho jata hai):
+      - mobile +917894561235  -> OTP 1111
+      - email testuser@gmail.com -> OTP 1234
+
+# Step 2 — OTP verify karo -> milta hai token
+curl -X POST "$BASE/api/auth/verify-otp" \
+  -H "Content-Type: application/json" \
+  -d '{"user_id":522,"otp":1111}'
+
+Response: { "status":"success", "code":200, "data":{ ... "auth_token":"<TOKEN>" } }
+
+# Baaki sabhi calls mein header:
+-H "Authorization: Bearer <TOKEN>"
+
+--------------------------------------------------------------------------------
+2. PUBLIC APIs (koi bhi logged-in user — patient ya advisor — call kar sakta hai)
+--------------------------------------------------------------------------------
+
+A) REEL LIST (feed)  -> sabhi published reels, har reel ke saath advisor details
+   GET /api/reel-list
+   Query params (dono optional):
+     - category : filtre category-wise (Career|Business|Finance|Health|Legal|
+                  Relationship|Astrology). Example: /reel-list?category=Finance
+     - user_id  : ek specific advisor ke saare reels dekho (profile se).
+                  Example: /reel-list?user_id=522
+   Headers: Authorization: Bearer <TOKEN>   (login required nahi bhi ho sakta, lekin
+          recommended taaki is_liked sahi aaye)
+
+   Response (har reel mein advisor + is_liked):
+   {
+     "status":"success","code":200,"message":"...",
+     "data":[
+       {
+         "id":1,
+         "title":"My First Reel",
+         "description":"20-30s knowledge snippet",
+         "category":"Finance",
+         "video":"<full video URL>",
+         "views_count":12,
+         "value_count":5,        // <-- ye "V"/Like count hai
+         "comments_count":3,
+         "shares_count":1,
+         "is_liked":false,        // <-- current user ne like kiya hai?
+         "created_at":"...","updated_at":"...",
+         "advisor": { "id":522,"name":"Advisor Name","image":"<image URL>" }
+       }
+     ]
+   }
+
+B) REEL DETAIL (single)
+   GET /api/reel-detail?reel_id=1
+   -> same shape as above, ek reel ka array (object) inside data.
+
+C) CATEGORIES LIST (reference)
+   GET /api/reel-categories
+   -> {"status":"success","data":["Career","Business","Finance","Health",
+                                  "Legal","Relationship","Astrology"]}
+
+--------------------------------------------------------------------------------
+3. INTERACTIONS (public, koi bhi user kar sakta hai)
+--------------------------------------------------------------------------------
+
+D) VIEW COUNT — IMPORTANT: 5 second dekne ke baad ek baar call karein
+   POST /api/increment-reel-view
+   Body (JSON): { "reel_id": 1 }
+   -> Jab user 5 seconds tak reel dekhe (playback 5s), tabhi ye API call karein,
+      taaki view genuine ho. Ek call ek view badhata hai.
+
+   curl -X POST "$BASE/api/increment-reel-view" \
+     -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+     -d '{"reel_id":1}'
+
+E) LIKE / UNLIKE (ye hi woh "Value" / "V" hai)
+   POST /api/add-reel-value
+   Body (JSON): { "reel_id": 1, "action": "add" }   // like
+   Body (JSON): { "reel_id": 1, "action": "remove" } // unlike (like toggle)
+   -> Har user ek reel ko sirf ek baar like kar sakta hai (unique constraint).
+      'add' jab already liked ho -> 409 error.
+
+   curl -X POST "$BASE/api/add-reel-value" \
+     -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+     -d '{"reel_id":1,"action":"add"}'
+
+F) SHARE
+   POST /api/add-reel-share
+   Body (JSON): { "reel_id": 1 }
+   -> shares_count +1.
+
+G) COMMENTS
+   - Add:    POST /api/add-reel-comment   Body: { "reel_id":1,"comment":"Nice!" }
+   - List:   GET  /api/get-reel-comments?reel_id=1
+   - Delete: DELETE /api/delete-reel-comment?comment_id=5  (author only)
+
+--------------------------------------------------------------------------------
+4. ADVISOR APIs (Sirf us advisor ki jo upload karega — owner scoped)
+--------------------------------------------------------------------------------
+
+H) UPLOAD REEL (video + title/description + category select)
+   POST /api/add-reel   (multipart/form-data)
+   Fields:
+     - video    : real mp4 file (accepted: mp4,mov,avi,mkv,webm; max 100MB)
+     - title    : string (required)
+     - description: string (optional)
+     - category : one of: Career|Business|Finance|Health|Legal|Relationship|Astrology
+
+   curl -X POST "$BASE/api/add-reel" \
+     -H "Authorization: Bearer $TOKEN" \
+     -F "video=@/path/to/reel.mp4;type=video/mp4" \
+     -F "title=My First Reel" \
+     -F "description=20-30s knowledge snippet" \
+     -F "category=Finance"
+
+   Response: { "status":"success","data":{ reel object } }
+
+   NOTE: Video real hona chahiye (mimes validation file content check karti hai,
+         isliye ek dummy/renamed file reject ho jayega).
+
+I) ADVISOR KE APNE REELS
+   GET /api/get-reels
+   -> advisor ki sabhi apni reels (owner = current logged-in user).
+
+J) DELETE OWN REEL
+   DELETE /api/delete-reel?reel_id=1
+   -> sirf reel ka owner delete kar sakta hai; video file bhi delete hoti hai.
+
+K) ADVISOR PERFORMANCE (apni reel ki stats)
+   GET /api/get-reel-performance?reel_id=1
+   -> { total_views, total_value (like), total_comments, total_shares }
+      sirf advisor apni reel ki performance dekh sakta hai.
+
+--------------------------------------------------------------------------------
+5. RESPONSE FORMAT (sabhi APIs ek jaisa)
+--------------------------------------------------------------------------------
+{
+  "status": "success" | "error",
+  "code": 200,
+  "message": "...",
+  "data": <object|array|null>
+}
+Errors: 401 = token invalid/missing, 404 = reel/comment not found,
+        422 = validation fail, 409 = like already added, 500 = server error.
+
+--------------------------------------------------------------------------------
+6. FLUTTER IMPLEMENTATION FLOW (step by step)
+--------------------------------------------------------------------------------
+1. Feed screen: GET /api/reel-list (optional ?category=<cat> or ?user_id=<advisor>)
+   -> list dikhaye (video URL + advisor name/image + advisor.id).
+   - Advisor profile tap: use reel.advisor.id with EXISTING
+     GET /api/get-doctor-detail?doctor_id=<advisor.id> (no new endpoint needed).
+   - Consult Now on a reel: call EXISTING POST /api/consult with doctor_id=<advisor.id>
+     (reuses the existing consultation flow; no new backend needed).
+2. Reel play hone par: agar playback position >= 5 seconds ho toh
+   POST /api/increment-reel-view {reel_id} ek baar call karein (debounce).
+3. Like button: POST /api/add-reel-value {reel_id, action:"add"}, locally is_liked=true.
+   Unlike: action:"remove".
+4. Share button: POST /api/add-reel-share {reel_id}.
+5. Comment: GET /api/get-reel-comments?reel_id -> list; add: POST /api/add-reel-comment
+   {reel_id, comment}; delete: DELETE /api/delete-reel-comment?comment_id=...
+6. Advisor home: GET /api/get-reels -> apni reels list.
+   Upload: POST /api/add-reel (multipart video + title/description/category).
+   Delete: DELETE /api/delete-reel?reel_id=...
+   Performance: GET /api/get-reel-performance?reel_id=...
+7. Categories dropdown: GET /api/reel-categories
+
+================================================================================
+File location note: BASE = http://127.0.0.1:8000/api (local)   ya
+                   https://consultkaar.com/api (staging/production)
+Run locally: php artisan serve  (default port 8000)
+================================================================================

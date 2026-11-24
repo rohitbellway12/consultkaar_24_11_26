@@ -1,0 +1,252 @@
+{
+  "info": {
+    "_postman_id": "advisor-reel-apis",
+    "name": "Advisor Reel APIs",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Advisor Reels feature APIs. Set variables: base_url (e.g. http://127.0.0.1:8000/api or https://consultkaar.com/api), token (Bearer JWT from /auth/verify-otp response.data.auth_token)."
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login (request OTP)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role_id\": 3,\n  \"mobile_number\": \"+917894561235\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/auth/login", "host": ["{{base_url}}"], "path": ["auth/login"] }
+          },
+          "event": [
+            {
+              "name": "test",
+              "script": {
+                "exec": [
+                  "// Fixed test OTP: +917894561235 -> 1111 , testuser@gmail.com -> 1234",
+                  "",
+                  "$console.log(\"Copy user_id from data.id to use in Verify OTP\");",
+                  ""
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Verify OTP (get token)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": 522,\n  \"otp\": 1111\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/auth/verify-otp", "host": ["{{base_url}}"], "path": ["auth/verify-otp"] }
+          },
+          "event": [
+            {
+              "name": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.environment.set(\"token\", json.data.auth_token || \"\");",
+                  "pm.test(\"token set\", () => pm.expect(json.data.auth_token).to.exist);",
+                  ""
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Public - Feed & Interactions",
+      "item": [
+        {
+          "name": "Categories",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/reel-categories", "host": ["{{base_url}}"], "path": ["reel-categories"] }
+          }
+        },
+        {
+          "name": "Reel List (feed)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{base_url}}/reel-list?category=Finance&user_id=522",
+              "host": ["{{base_url}}"],
+              "path": ["reel-list"],
+              "query": [
+                { "key": "category", "value": "Finance", "description": "optional: Career|Business|Finance|Health|Legal|Relationship|Astrology" },
+                { "key": "user_id", "value": "522", "description": "optional: view all reels by an advisor" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Reel Detail",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/reel-detail?reel_id=1", "host": ["{{base_url}}"], "path": ["reel-detail"], "query": [{ "key": "reel_id", "value": "1" }] }
+          }
+        },
+        {
+          "name": "Increment View (call after 5s watch)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reel_id\": 1\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/increment-reel-view", "host": ["{{base_url}}"], "path": ["increment-reel-view"] }
+          }
+        },
+        {
+          "name": "Like (add value)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reel_id\": 1,\n  \"action\": \"add\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/add-reel-value", "host": ["{{base_url}}"], "path": ["add-reel-value"] }
+          }
+        },
+        {
+          "name": "Unlike (remove value)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reel_id\": 1,\n  \"action\": \"remove\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/add-reel-value", "host": ["{{base_url}}"], "path": ["add-reel-value"] }
+          }
+        },
+        {
+          "name": "Share Reel",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reel_id\": 1\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/add-reel-share", "host": ["{{base_url}}"], "path": ["add-reel-share"] }
+          }
+        },
+        {
+          "name": "Add Comment",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reel_id\": 1,\n  \"comment\": \"Great reel!\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/add-reel-comment", "host": ["{{base_url}}"], "path": ["add-reel-comment"] }
+          }
+        },
+        {
+          "name": "Get Comments",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/get-reel-comments?reel_id=1", "host": ["{{base_url}}"], "path": ["get-reel-comments"], "query": [{ "key": "reel_id", "value": "1" }] }
+          }
+        },
+        {
+          "name": "Delete Comment",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/delete-reel-comment?comment_id=1", "host": ["{{base_url}}"], "path": ["delete-reel-comment"], "query": [{ "key": "comment_id", "value": "1" }] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Advisor - Management",
+      "item": [
+        {
+          "name": "Upload Reel",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "body": {
+              "mode": "formdata",
+              "form": [
+                { "key": "video", "type": "file", "src": "reel.mp4", "description": "real mp4; add type=video/mp4" },
+                { "key": "title", "type": "text", "value": "My First Reel" },
+                { "key": "description", "type": "text", "value": "20-30s knowledge snippet" },
+                { "key": "category", "type": "text", "value": "Finance" }
+              ]
+            },
+            "url": { "raw": "{{base_url}}/add-reel", "host": ["{{base_url}}"], "path": ["add-reel"] }
+          }
+        },
+        {
+          "name": "My Reels",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/get-reels", "host": ["{{base_url}}"], "path": ["get-reels"] }
+          }
+        },
+        {
+          "name": "Delete My Reel",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/delete-reel?reel_id=1", "host": ["{{base_url}}"], "path": ["delete-reel"], "query": [{ "key": "reel_id", "value": "1" }] }
+          }
+        },
+        {
+          "name": "Reel Performance",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/get-reel-performance?reel_id=1", "host": ["{{base_url}}"], "path": ["get-reel-performance"], "query": [{ "key": "reel_id", "value": "1" }] }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    { "key": "base_url", "value": "http://127.0.0.1:8000/api" },
+    { "key": "token", "value": "" }
+  ]
+}

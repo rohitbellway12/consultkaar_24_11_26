@@ -163,6 +163,38 @@
                         </li>
                     @endif
 
+                    <!-- AI Assistant Section (GPT-6 Luna) -->
+                    <li class="nav-item">
+                        <small class="nav-subtitle">AI Assistant (GPT-6 Luna)</small>
+                        <small class="tio-more-horizontal nav-subtitle-replacer"></small>
+                    </li>
+                    <li class="navbar-vertical-aside-has-menu {{ Request::is('admin/ai-assistant*') ? 'active' : '' }}">
+                        <a class="js-navbar-vertical-aside-menu-link nav-link nav-link-toggle" href="javascript:" title="AI Assistant">
+                            <i class="tio-settings-outlined nav-icon"></i>
+                            <span class="navbar-vertical-aside-mini-mode-hidden-elements text-truncate">AI Assistant</span>
+                        </a>
+                        <ul class="js-navbar-vertical-aside-submenu nav nav-sub" style="{{ Request::is('admin/ai-assistant*') ? 'display: block;' : 'display: none;' }}">
+                            <li class="nav-item {{ Request::is('admin/ai-assistant/settings') ? 'active' : '' }}">
+                                <a class="nav-link" href="{{ route('admin.ai.settings') }}">
+                                    <span class="tio-circle nav-indicator-icon"></span>
+                                    <span class="text-truncate">AI Settings</span>
+                                </a>
+                            </li>
+                            <li class="nav-item {{ Request::is('admin/ai-assistant/questions') ? 'active' : '' }}">
+                                <a class="nav-link" href="{{ route('admin.ai.questions') }}">
+                                    <span class="tio-circle nav-indicator-icon"></span>
+                                    <span class="text-truncate">Trending Questions</span>
+                                </a>
+                            </li>
+                            <li class="nav-item {{ Request::is('admin/ai-assistant/sessions*') ? 'active' : '' }}">
+                                <a class="nav-link" href="{{ route('admin.ai.sessions') }}">
+                                    <span class="tio-circle nav-indicator-icon"></span>
+                                    <span class="text-truncate">Chat History & Logs</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+
 
 
                     <!--medical store section-->

@@ -653,6 +653,20 @@ Route::group([
         //     Route::post('update/{service}', 'BusinessSettingsController@updateSocialLogin')->name('update');
 
         // });
+        // AI Assistant & Consultation Management (GPT-6 Luna)
+        Route::group(['prefix' => 'ai-assistant', 'as' => 'ai.'], function () {
+            Route::get('settings', 'AIChatAdminController@settings')->name('settings');
+            Route::post('settings', 'AIChatAdminController@updateSettings')->name('update-settings');
+
+            Route::get('questions', 'AIChatAdminController@questions')->name('questions');
+            Route::post('questions/store', 'AIChatAdminController@storeQuestion')->name('store-question');
+            Route::post('questions/update/{id}', 'AIChatAdminController@updateQuestion')->name('update-question');
+            Route::get('questions/status/{id}/{status}', 'AIChatAdminController@statusQuestion')->name('status-question');
+            Route::delete('questions/delete/{id}', 'AIChatAdminController@deleteQuestion')->name('delete-question');
+
+            Route::get('sessions', 'AIChatAdminController@sessions')->name('sessions');
+            Route::get('sessions/{id}', 'AIChatAdminController@sessionDetails')->name('session-details');
+        });
     });
 
     Route::get('zone/get-coordinates/{id}', 'LocationController@get_coordinates')->name('zone.get-coordinates');

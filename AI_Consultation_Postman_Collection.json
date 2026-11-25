@@ -1,0 +1,265 @@
+{
+	"info": {
+		"_postman_id": "consultkaar-ai-consultation-gpt6-luna",
+		"name": "Consultkaar - AI Consultation Assistant (GPT-6 Luna)",
+		"description": "APIs for 5-minute Free AI Consultation, real-time chat, clinical summary, and human doctor recommendations.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. AI Home Screen Data",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer {{user_token}}",
+						"description": "Optional: include to get user-specific eligibility & cooldown status",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/api/v1/ai/home",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"ai",
+						"home"
+					]
+				},
+				"description": "Fetches categories, trending questions, model name (GPT-6 Luna), free chat duration (5 mins), and cooldown status."
+			},
+			"response": []
+		},
+		{
+			"name": "2. Start 5-Minute Free Consultation",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer {{user_token}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "category_id",
+							"value": "4",
+							"description": "ID of category selected by user (optional)",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{base_url}}/api/v1/ai/start-chat",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"ai",
+						"start-chat"
+					]
+				},
+				"description": "Starts the 5-minute timer session, checks 24-hr cooldown, and returns session_uuid and initial AI welcome message."
+			},
+			"response": []
+		},
+		{
+			"name": "3. Send Message to AI",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer {{user_token}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "session_uuid",
+							"value": "{{session_uuid}}",
+							"type": "text"
+						},
+						{
+							"key": "message",
+							"value": "I have been experiencing a mild headache and fever for 2 days. What should I do?",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{base_url}}/api/v1/ai/send-message",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"ai",
+						"send-message"
+					]
+				},
+				"description": "Sends user message to GPT-6 Luna. Returns AI reply and remaining seconds. If 5 mins expire, returns is_expired: true with recommended advisors."
+			},
+			"response": []
+		},
+		{
+			"name": "4. End Chat & Get Doctor Recommendations",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer {{user_token}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "session_uuid",
+							"value": "{{session_uuid}}",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{base_url}}/api/v1/ai/end-chat",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"ai",
+						"end-chat"
+					]
+				},
+				"description": "Called manually or when 5-min timer ends. AI generates a clinical summary and returns top recommended real human advisors for direct booking."
+			},
+			"response": []
+		},
+		{
+			"name": "5. User Past AI Chat History",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer {{user_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/api/v1/ai/history?page=1",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"ai",
+						"history"
+					],
+					"query": [
+						{
+							"key": "page",
+							"value": "1"
+						}
+					]
+				},
+				"description": "Returns paginated list of previous AI consultations with summary, category, date, and message count."
+			},
+			"response": []
+		},
+		{
+			"name": "6. Get Messages of a Session",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer {{user_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/api/v1/ai/session-messages?session_uuid={{session_uuid}}",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"ai",
+						"session-messages"
+					],
+					"query": [
+						{
+							"key": "session_uuid",
+							"value": "{{session_uuid}}"
+						}
+					]
+				},
+				"description": "Returns complete message transcript of a specific session."
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost/consultkaar"
+		},
+		{
+			"key": "user_token",
+			"value": "YOUR_JWT_USER_TOKEN"
+		},
+		{
+			"key": "session_uuid",
+			"value": ""
+		}
+	]
+}

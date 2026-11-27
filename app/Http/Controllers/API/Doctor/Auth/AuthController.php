@@ -27,14 +27,6 @@ class AuthController extends Controller
 {
 
 
-    /**
-     * Authenticate a doctor and provide a JWT token.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * 
-     * @return \Illuminate\Http\Response
-     */
-
 
     public function login(Request $request)
     {
@@ -629,9 +621,9 @@ class AuthController extends Controller
             'identity_proofs.*.type' => 'numeric|min:1',
             'identity_proofs.*.front' => 'image|mimes:jpeg,png,jpg',
             'identity_proofs.*.back' => 'nullable|image|mimes:jpeg,png,jpg',
-            'relevant_documents' => 'array|min:1',
-            'relevant_documents.*.type' => 'numeric|min:1',
-            'relevant_documents.*.file' => 'image|mimes:jpeg,png,jpg',
+            'relevant_documents' => 'nullable|array',
+            'relevant_documents.*.type' => 'nullable|numeric|min:1',
+            'relevant_documents.*.file' => 'nullable|image|mimes:jpeg,png,jpg',
         ];
 
         // Check if selected domain is "Other" by name
@@ -708,16 +700,19 @@ class AuthController extends Controller
 
         
         $relevantDocs = [];
-        foreach ($request->file('relevant_documents', []) as $index => $file) {
-            if ($file) {
-                $image = Helpers::upload('users/relevant_documents/', 'png', $file);
-                $relevantDocs[] = [
-                    'type' => $request->input("relevant_documents.$index.type"),
-                    'image' => $image
-                ];
+        if ($request->has('relevant_documents')) {
+            foreach ($request->file('relevant_documents', []) as $index => $file) {
+                $docFile = is_array($file) && isset($file['file']) ? $file['file'] : $file;
+                if ($docFile) {
+                    $image = Helpers::upload('users/relevant_documents/', 'png', $docFile);
+                    $relevantDocs[] = [
+                        'type' => $request->input("relevant_documents.$index.type"),
+                        'image' => $image
+                    ];
+                }
             }
         }
-        $user->relevant_documents = $relevantDocs;
+        $user->relevant_documents = !empty($relevantDocs) ? $relevantDocs : null;
 
         
         if ($request->hasFile('image')) {
